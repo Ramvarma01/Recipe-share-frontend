@@ -16,6 +16,8 @@ const styles = StyleSheet.create({
         // marginBottom: 5,
     },
     inputBox: {
+        // flex:1,
+        // fontSize: 16,
         backgroundColor: '#ffffff',
         height: 40,
         borderRadius: 10,

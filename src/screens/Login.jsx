@@ -1,82 +1,87 @@
-import { View, Text, TextInput, TouchableOpacity, Alert, ScrollView, } from 'react-native'
-import React, { useState, useContext } from 'react'
-import axios from 'axios'
-import AsyncStorage from '@react-native-async-storage/async-storage'
-// import InputBox from '../components/InputBox'
-import { AuthContext } from '../context/authContext'
-import Logo from '../components/Logo'
-import styles from "../Styles"
+import { View, Text, TextInput, TouchableOpacity, Alert, ScrollView, ActivityIndicator } from 'react-native';
+import React, { useState, useContext } from 'react';
+import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { AuthContext } from '../context/authContext';
+import Logo from '../components/Logo';
+import styles from "../Styles";
+import Icon from '@react-native-vector-icons/fontawesome';
 
 function Login({ navigation }) {
-    const [state, setState] =useContext(AuthContext)
-    const [username, setUsername] = useState('')
-    const [password, setPassword] = useState('')
-    const [fieldVerify, setFieldVerify] = useState(true)
-    const [loading, setLoading] = useState(false)
+    const [state, setState] = useContext(AuthContext);
+    const [username, setUsername] = useState('');
+    const [password, setPassword] = useState('');
+    const [errors, setErrors] = useState({});
+    const [loading, setLoading] = useState(false);
 
-    const handle = async () => {
+    // 🔍 Validate Inputs
+    const validateFields = () => {
+        let newErrors = {};
+        if (!username) newErrors.username = "Username is required";
+        else if (username.length > 10) newErrors.username = "Username can only have 10 characters";
+
+        if (!password) newErrors.password = "Password is required";
+        else if (password.length < 6) newErrors.password = "Password must be at least 6 characters";
+
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
+    };
+
+    // 🔑 Handle Login
+    const handleLogin = async () => {
+        if (!validateFields()) return;
+
         try {
-            setLoading(true)
-            if (username && password) {
-                // Alert.alert(`OTP has been sent to ${email}`);
-                // Alert.alert("Logged in");
-                const {data} = await axios.post('/login',{username,password}) ;
-                Alert.alert(data && data.message);
-                setState(data)
-                await AsyncStorage.setItem('@auth',JSON.stringify(data));
-                console.log('Login Data==>', { username, password })
-                if(data.success == true)
-                {navigation.navigate("Home")}
-            } else {
-                setFieldVerify(false)
-                // Alert.alert("Please fill in all fields.");
-            }
-            setLoading(false)
+            setLoading(true);
+            const { data } = await axios.post('/login', { username, password });
 
+            if (data.success) {
+                setState(data);
+                // await AsyncStorage.setItem('@auth', JSON.stringify({data}));
+                await AsyncStorage.setItem('@auth', JSON.stringify({ token: data.token, user: data.user }));
+
+                console.log('Local storage after login=>',await AsyncStorage.getItem('@auth'),);
+                // navigation.navigate('Home');  // Redirect after login
+            }
+            Alert.alert(data.message);
         } catch (error) {
-             Alert.alert(error.response.data.message);
-            setLoading(false)
-            console.log(error)
+            Alert.alert("Error", error.response?.data?.message || "Something went wrong");
+            console.error(error);
+        } finally {
+            setLoading(false);
         }
     };
 
-    const getLoaclStorage = async () => {
-        let data = await AsyncStorage.getItem('@auth');
-         console.log('Local storage =>',data);
-    }
-getLoaclStorage();
-
+    const userlogo = <Icon name="user" size={20} color="#555" style={styles.inputIcon} />
     return (
-        <ScrollView contentContainerStyle={{ flexGrow: 1 }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps={"always"}>
+        <ScrollView contentContainerStyle={{ flexGrow: 1 }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="always">
             <View style={styles.container}>
-                <Logo></Logo>
+                <Logo />
                 <Text style={styles.pageTitle}>Login</Text>
 
-                <View style={{ margin: 20, }}>
-                    <TextInput placeholder='Username' value={username} onChangeText={setUsername} style={styles.inputBox} />
+                <View style={{ margin: 20 }}>
+                    <TextInput placeholder="Username" value={username} onChangeText={setUsername} style={styles.inputBox} />
+                    {errors.username && <Text style={styles.validityText}>{errors.username}</Text>}
 
-                    <TextInput placeholder='Password' value={password} onChangeText={setPassword} style={styles.inputBox} secureTextEntry={true} />
+                    <TextInput placeholder="Password" value={password} onChangeText={setPassword} style={styles.inputBox} secureTextEntry={true} />
+                    {errors.password && <Text style={styles.validityText}>{errors.password}</Text>}
 
-                    <Text style={styles.forgotPassword}>Forgot Password</Text>
+                    <Text style={styles.forgotPassword} onPress={() => navigation.navigate('ForgotPassword')}>Forgot Password?</Text>
 
-                    {fieldVerify ? null : (<Text style={styles.validityText}>Please fill in all fields !!</Text>)}
-
-                    <TouchableOpacity style={styles.btn} onPress={handle}>
-                        <Text style={styles.btnText}>{loading ? "Please wait..." : "LOGIN"}</Text>
+                    <TouchableOpacity style={styles.btn} onPress={handleLogin} disabled={loading}>
+                        {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.btnText}>LOGIN</Text>}
                     </TouchableOpacity>
 
-                    <Text style={styles.linkText}>New user{" "}
-                        <Text
-                            style={styles.innerLinkText}
-                            onPress={() => navigation.navigate('Register')}>
+                    <Text style={styles.linkText}>
+                        New user?{' '}
+                        <Text style={styles.innerLinkText} onPress={() => navigation.navigate('Register')}>
                             Register
                         </Text>
                     </Text>
                 </View>
-                {/* <Text>{JSON.stringify({ username, password }, null, 4)}</Text> */}
-            </View >
+            </View>
         </ScrollView>
-    )
+    );
 }
 
-export default Login
+export default Login;

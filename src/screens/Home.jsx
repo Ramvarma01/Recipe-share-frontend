@@ -1,72 +1,101 @@
-import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native'
-import React, {useContext} from 'react'
-import { AuthContext } from '../context/authContext'
-import FooterMenu from '../components/FooterMenu'
-import HeaderMenu from '../components/HeaderMenu'
-import AsyncStorage from '@react-native-async-storage/async-storage'
-import HeaderLogo from '../components/HeaderLogo'
-import Logout from '../components/LogoutIcon'
+import { View, Text, TouchableOpacity, StyleSheet, Alert, ScrollView, Image } from 'react-native'
+import React, {useContext, useState} from 'react'
+import { PostContext } from '../context/postContext'
+import Icon from '@react-native-vector-icons/fontawesome'
+import moment from "moment";
+import Dropdown from '../components/Dropdown';
 
 const Home = ({navigation}) => {
-    const [state]= useContext(AuthContext)
-    const handleLogout = async ( )=> {
-      // setState({ token: "", user: null});
-      await AsyncStorage.removeItem("@auth");
-      Alert.alert("Logout Successfully");
-      navigation.navigate("Login")
-  }
+    const [posts,setPosts, getAllPosts]= useContext(PostContext);
+    
   return (
-    <>
-      <View style={styles.Headercontainer}>
-        <HeaderLogo></HeaderLogo>
-        <Text style={styles.pagetitle}>RECIPE SHARE</Text>/
-        <TouchableOpacity style={styles.btn} onPress={handleLogout}> 
-        <Logout></Logout>
-        </TouchableOpacity>
-      </View>
-
     <View style ={styles.container}>
-      
-      <Text>{JSON.stringify(state, null, 4)}</Text>
+      <ScrollView 
+      showsVerticalScrollIndicator={false}
+      keyboardShouldPersistTaps="always">
+      <View>
+       {posts?.map((post, i) => (
+        <TouchableOpacity key={i} onPress={() => navigation.navigate('ViewRecipe', { recipe: post })}>
+        {/* <View style={style.card} key={i}> */}
+        <View style={styles.card}>
+           <View>
+              {post.photos? ( <Image
+                 source={{uri: post.photos[0]}}
+                  style={styles.recipeImage}
+                  />): <></>}
+            </View>
+          <View style={{padding:10,width:"70%"}}>
+          <Text style={styles.title}>{post?.title}</Text>
+          <Text style={styles.desc}> {post?.description}</Text>
+          <View style={styles.footer}>
+            <View>
+            {post?.user_id?.username && (
+              <Text>
+                {" "}
+                <Icon name="user-o" color={"red"} />{" "}
+                {post?.user_id?.username}
+              </Text>
+             )}
+             </View>
+            <Text>
+              {" "}
+              <Icon name="clock-o" color={"red"} />{" "}
+              {/* {moment(post?.createdAt).format("DD MMM, YYYY")} */}
+              {moment().diff(moment(post?.createdAt), 'years') >= 1 ? moment(post?.createdAt).format("DD MMM, YYYY") : moment(post?.createdAt).format("DD MMM")}
+            </Text>
+           </View>
+           </View>
+        </View>
+        </TouchableOpacity>
+      ))}
     </View>
-    <FooterMenu></FooterMenu>
-    </>
+      </ScrollView>
+    </View>
   )
 }
 
 const styles = StyleSheet.create({
   container: {
-      flex:1,
-      justifyContent: "space-between",
-      margin: 10,
-      // backgroundColor: '#deb887',
-  },
-  Headercontainer:{
-    backgroundColor: '#deb887',
-    flexDirection : "row",
-    marginVertical:10,
-    marginHorizontal:12,
-    paddingLeft: 5,
-    paddingRight:10,
-    paddingVertical: 5,
-    borderRadius: 20,
+    flex: 1,
     justifyContent: "space-between",
-},
-pagetitle:{
-    fontSize: 20,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    color: '#2f4f4f',
-    paddingVertical: 10,
-},
-btn: {
-    backgroundColor: '#2f4f4f',
-    height: 40,
-    width:40,
-    borderRadius: 10,
-    justifyContent: 'center',
-    marginVertical: 5,
-},
+    backgroundColor: '#f0f8ff'
+  },
+  card: {
+    // width: "95%",
+    flexDirection: 'row',
+    backgroundColor: "#fff",
+    borderWidth: 0.2,
+    borderColor: "gray",
+    padding: 10,
+    borderRadius: 5,
+    margin: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.8,
+    shadowRadius: 2,
+    elevation: 5,
+    // marginRight:10,
+  },
+  recipeImage: {
+    width: 90,
+    height: 90,
+    borderRadius: 5,
+    borderWidth:1.5,
+    marginRight:10,
+  },
+  title: {
+    fontWeight: "bold",
+    paddingBottom: 10,
+    borderBottomWidth: 0.3,
+  },
+  footer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 10,
+  },
+  desc: {
+    marginTop: 10,
+  },
+});
 
-})
 export default Home

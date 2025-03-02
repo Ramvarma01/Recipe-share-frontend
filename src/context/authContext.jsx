@@ -14,8 +14,10 @@ const AuthProvider =({children}) => {
     });
 
     //BaseURL Setting
-    axios.defaults.baseURL = "https://recipe-share-code.onrender.com"
-    // axios.defaults.baseURL = "http://192.168.0.105:8080"
+    axios.defaults.baseURL = "https://recipe-share-code.onrender.com"  //render
+    // axios.defaults.baseURL = "http://192.168.0.104:8080"   //home
+    // axios.defaults.baseURL = "http://192.168.0.105:8080"   //home 5G
+    // axios.defaults.baseURL = "http://192.168.43.88:8080"  //hem
 
     //initial local storage data
     useEffect(() => {
@@ -23,7 +25,6 @@ const AuthProvider =({children}) => {
             let data = await AsyncStorage.getItem('@auth')
             let loginData = JSON.parse(data)
             setState({...state, user: loginData?.user, token: loginData?.token})
-            //  console.log('Local storage =>',data)
         };
         getLocalStorageData();
     }, []);
